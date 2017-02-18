@@ -25,5 +25,5 @@
 (test* "n in N" 'invalid (fermat-test -1 11))
 (test* "2 <= a < n" 'invalid (fermat-test 11 11))
 
-
 (test-end :exit-on-failure #t)
+
