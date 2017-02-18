@@ -1,7 +1,6 @@
 (use gauche.test)
 
 (test-start "cryptoybox.prime.fermat")
-(load "../../lib/prime/fermat.scm")
 (import cryptoybox.prime.fermat)
 (test-module 'cryptoybox.prime.fermat)
 
@@ -27,4 +26,4 @@
 (test* "2 <= a < n" 'invalid (fermat-test 11 11))
 
 
-(test-end)
+(test-end :exit-on-failure #t)
