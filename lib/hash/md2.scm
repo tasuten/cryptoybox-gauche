@@ -1,12 +1,12 @@
-; (define-module cryptoybox.hash.md2
-;                (export md2)
-(use gauche.uvector)
-(use srfi-1)
-;                )
-; (select-module cryptoybox.hash.md2)
+(define-module cryptoybox.hash.md2
+               (export md2)
+               (use gauche.uvector)
+               (use srfi-1)
+               )
+(select-module cryptoybox.hash.md2)
 
 (define (md2 message)
-  (hexdec (compress (append-checksum (append-padding (string->u8vector message)))))
+  (u8vector->hex (compress (append-checksum (append-padding (string->u8vector message)))))
   )
 
 
@@ -17,10 +17,10 @@
   )
 
 (define (append-checksum bytes)
-  (u8vector-append bytes (checksum bytes (make-u8vector 16 0) 0))
+  (u8vector-append bytes (checksum-loop bytes (make-u8vector 16 0) 0))
   )
 
-(define (checksum bytes prev-checksum prev-last)
+(define (checksum-loop bytes prev-checksum prev-last)
   (if (= 0 (u8vector-length bytes)) prev-checksum
     (let ((section (u8vector-copy bytes 0 16))
           (current-checksum prev-checksum)
@@ -28,18 +28,18 @@
           )
       (for-each (lambda (index)
                   (let (
-                        (cs (u8vector-ref *PI_SUBST*
-                                          (logxor current-last (u8vector-ref section index))))
+                        (tmp (u8vector-ref *PI_SUBST*
+                                           (logxor current-last (u8vector-ref section index))))
                         )
                     (u8vector-set!
-                      current-checksum index cs
+                      current-checksum index tmp
                       )
-                    (set! current-last cs)
+                    (set! current-last tmp)
                     )
                   )
                 (iota 16 0))
 
-      (checksum (u8vector-copy bytes 16) current-checksum current-last)
+      (checksum-loop (u8vector-copy bytes 16) current-checksum current-last)
       )
     )
   )
@@ -68,10 +68,10 @@
   )
 
 (define (compress bytes)
-  (comp bytes (make-u8vector 48 0))
+  (compress-loop bytes (make-u8vector 48 0))
   )
 
-(define (comp bytes prev-x)
+(define (compress-loop bytes prev-x)
   (if (= 0 (u8vector-length bytes)) prev-x
     (let ((section (u8vector-copy bytes 0 16))
           (x prev-x)
@@ -86,22 +86,22 @@
 
         (for-each (lambda (r)
                     (for-each (lambda (k)
-
                                 (u8vector-set! x k (logxor (u8vector-ref x k) (u8vector-ref *PI_SUBST* t)))
                                 (set! t (u8vector-ref x k))
                                 )
                               (iota 48 0))
+
                     (set! t (modulo (+ t r) 256))
                     )
                   (iota 18 0))
         )
 
-      (comp (u8vector-copy bytes 16) x)
+      (compress-loop (u8vector-copy bytes 16) x)
       )
     )
   )
 
-(define (hexdec bytes)
+(define (u8vector->hex bytes)
   (string-join
     (map
       (lambda (byte) (format #f "~2,'0x" byte))
