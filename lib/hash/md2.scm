@@ -32,9 +32,9 @@
                                            (logxor current-last (u8vector-ref section index))))
                         )
                     (u8vector-set!
-                      current-checksum index tmp
+                      current-checksum index (logxor tmp (u8vector-ref current-checksum index))
                       )
-                    (set! current-last tmp)
+                    (set! current-last (u8vector-ref current-checksum index))
                     )
                   )
                 (iota 16 0))
