@@ -6,7 +6,7 @@
 ; (select-module cryptoybox.hash.md2)
 
 (define (md2 message)
-  (compress (append-checksum (append-padding (string->u8vector message))))
+  (hexdec (compress (append-checksum (append-padding (string->u8vector message)))))
   )
 
 
@@ -101,3 +101,11 @@
     )
   )
 
+(define (hexdec bytes)
+  (string-join
+    (map
+      (lambda (byte) (format #f "~2,'0x" byte))
+      (u8vector->list (u8vector-copy bytes 0 16))
+      )
+    "")
+  )
