@@ -6,7 +6,7 @@
 ; (select-module cryptoybox.hash.md2)
 
 (define (md2 message)
-  (append-checksum (append-padding (string->u8vector message)))
+  (compress (append-checksum (append-padding (string->u8vector message))))
   )
 
 
@@ -31,11 +31,11 @@
                         (cs (u8vector-ref *PI_SUBST*
                                           (logxor current-last (u8vector-ref section index))))
                         )
-                   (u8vector-set!
+                    (u8vector-set!
                       current-checksum index cs
                       )
                     (set! current-last cs)
-                   )
+                    )
                   )
                 (iota 16 0))
 
@@ -66,3 +66,38 @@
       31 26 219 153 141 51 159 17 131 20
       )
   )
+
+(define (compress bytes)
+  (comp bytes (make-u8vector 48 0))
+  )
+
+(define (comp bytes prev-x)
+  (if (= 0 (u8vector-length bytes)) prev-x
+    (let ((section (u8vector-copy bytes 0 16))
+          (x prev-x)
+          )
+
+      (for-each (lambda (index)
+                  (u8vector-set! x (+ 16 index) (u8vector-ref section index))
+                  (u8vector-set! x (+ 32 index) (logxor (u8vector-ref x index) (u8vector-ref x (+ 16 index))))
+                  )
+                (iota 16 0))
+      (let ((t 0))
+
+        (for-each (lambda (r)
+                    (for-each (lambda (k)
+
+                                (u8vector-set! x k (logxor (u8vector-ref x k) (u8vector-ref *PI_SUBST* t)))
+                                (set! t (u8vector-ref x k))
+                                )
+                              (iota 48 0))
+                    (set! t (modulo (+ t r) 256))
+                    )
+                  (iota 18 0))
+        )
+
+      (comp (u8vector-copy bytes 16) x)
+      )
+    )
+  )
+
