@@ -23,18 +23,15 @@
 (define (checksum-loop bytes checksum last)
   (if (= 0 (u8vector-length bytes)) checksum
     (let ((section (u8vector-copy bytes 0 16)))
-      (for-each (lambda (index)
-                  (let (
-                        (tmp (u8vector-ref *PI_SUBST*
-                                           (logxor last (u8vector-ref section index))))
-                        )
-                    (u8vector-set!
-                      checksum index (logxor tmp (u8vector-ref checksum index))
-                      )
-                    (set! last (u8vector-ref checksum index))
-                    )
-                  )
-                (iota 16 0))
+      (dotimes (index 16)
+        (let ((tmp (u8vector-ref *PI_SUBST*
+                                 (logxor last (u8vector-ref section index))))
+              )
+          (u8vector-set!
+            checksum index (logxor tmp (u8vector-ref checksum index)))
+          (set! last (u8vector-ref checksum index))
+          )
+        )
 
       (checksum-loop (u8vector-copy bytes 16) checksum last)
       )
@@ -72,23 +69,19 @@
   (if (= 0 (u8vector-length bytes)) x
     (let ((section (u8vector-copy bytes 0 16)))
 
-      (for-each (lambda (index)
-                  (u8vector-set! x (+ 16 index) (u8vector-ref section index))
-                  (u8vector-set! x (+ 32 index) (logxor (u8vector-ref x index) (u8vector-ref x (+ 16 index))))
-                  )
-                (iota 16 0))
+      (dotimes (index 16)
+        (u8vector-set! x (+ 16 index) (u8vector-ref section index))
+        (u8vector-set! x (+ 32 index) (logxor (u8vector-ref x index) (u8vector-ref x (+ 16 index))))
+        )
+
       (let ((t 0))
-
-        (for-each (lambda (r)
-                    (for-each (lambda (k)
-                                (u8vector-set! x k (logxor (u8vector-ref x k) (u8vector-ref *PI_SUBST* t)))
-                                (set! t (u8vector-ref x k))
-                                )
-                              (iota 48 0))
-
-                    (set! t (modulo (+ t r) 256))
-                    )
-                  (iota 18 0))
+        (dotimes (r 18)
+          (dotimes (k 48)
+            (u8vector-set! x k (logxor (u8vector-ref x k) (u8vector-ref *PI_SUBST* t)))
+            (set! t (u8vector-ref x k))
+            )
+          (set! t (modulo (+ t r) 256))
+          )
         )
 
       (compress-loop (u8vector-copy bytes 16) x)
