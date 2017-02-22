@@ -6,7 +6,9 @@
 (select-module cryptoybox.hash.md2)
 
 (define (md2 message)
-  (u8vector->hex (compress (append-checksum (append-padding (string->u8vector message)))))
+  (u8vector->hexstring
+    (digest (compress (append-checksum (append-padding (string->u8vector message)))))
+    )
   )
 
 
@@ -25,8 +27,7 @@
     (let ((section (u8vector-copy bytes 0 16)))
       (dotimes (index 16)
         (let ((tmp (u8vector-ref *PI_SUBST*
-                                 (logxor last (u8vector-ref section index))))
-              )
+                                 (logxor last (u8vector-ref section index)))))
           (u8vector-set!
             checksum index (logxor tmp (u8vector-ref checksum index)))
           (set! last (u8vector-ref checksum index))
@@ -71,8 +72,7 @@
 
       (dotimes (index 16)
         (u8vector-set! x (+ 16 index) (u8vector-ref section index))
-        (u8vector-set! x (+ 32 index) (logxor (u8vector-ref x index) (u8vector-ref x (+ 16 index))))
-        )
+        (u8vector-set! x (+ 32 index) (logxor (u8vector-ref x index) (u8vector-ref x (+ 16 index)))))
 
       (let ((t 0))
         (dotimes (r 18)
@@ -89,11 +89,15 @@
     )
   )
 
-(define (u8vector->hex bytes)
+(define (digest bytes)
+  (u8vector-copy bytes 0 16)
+  )
+
+(define (u8vector->hexstring bytes)
   (string-join
-    (map
-      (lambda (byte) (format #f "~2,'0x" byte))
-      (u8vector->list (u8vector-copy bytes 0 16))
-      )
+    (map (lambda (byte) (format #f "~2,'0x" byte))
+         (u8vector->list bytes)
+         )
     "")
   )
+
