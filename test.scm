@@ -7,6 +7,7 @@
                 )
               (cdr args))
     )
+  0
   )
 
 ; call like (test "hash/md2")
