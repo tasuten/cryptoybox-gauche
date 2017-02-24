@@ -2,6 +2,8 @@
                (export md2)
                (use gauche.uvector)
                (use srfi-1)
+               (include "../utils/u8vector.scm")
+               (import cryptoybox.utils.u8vector)
                )
 (select-module cryptoybox.hash.md2)
 
@@ -92,12 +94,3 @@
 (define (digest bytes)
   (u8vector-copy bytes 0 16)
   )
-
-(define (u8vector->hexstring bytes)
-  (string-join
-    (map (lambda (byte) (format #f "~2,'0x" byte))
-         (u8vector->list bytes)
-         )
-    "")
-  )
-
